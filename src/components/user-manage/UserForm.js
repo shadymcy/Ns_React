@@ -1,11 +1,12 @@
 import React, { forwardRef, useEffect, useState } from "react";
 import { Input, Form, Select } from "antd";
+// TODO: UserForm的权限限制
 const UserForm = forwardRef((props, ref) => {
   const [isDisabled, setisDisabled] = useState(false);
   const { regionList, roleList, isUpdateDisabled } = props;
   useEffect(() => {
     setisDisabled(isUpdateDisabled);
-  }, [props]);
+  }, [isUpdateDisabled, props]);
   return (
     <Form layout="vertical" ref={ref}>
       <Form.Item

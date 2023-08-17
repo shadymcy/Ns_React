@@ -32,7 +32,7 @@ export default function Sandbox() {
             <Route path="user-manage/list" element={<UserList />} />
             <Route path="right-manage/role/list" element={<RoleList />} />
             <Route path="right-manage/right/list" element={<RightList />} />
-            <Route path="/" exact element={<Navigate to="/home" />} />
+            <Route path="/" exact element={<Navigate to="home" />} />
             <Route path="*" element={<NoPermission />} />
           </Routes>
         </Content>

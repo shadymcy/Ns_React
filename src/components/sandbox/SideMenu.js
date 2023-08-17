@@ -14,6 +14,9 @@ export default function SideMenu() {
   let navigate = useNavigate();
   let { pathname } = useLocation();
   const [menu, setMenu] = useState([]);
+  const {
+    role: { rights },
+  } = JSON.parse(localStorage.getItem("token"));
   // const iconList = {
   //   "/home": <UploadOutlined />,
   //   "/user-manage": <UserOutlined />,
@@ -26,9 +29,9 @@ export default function SideMenu() {
     axios.get("http://localhost:5000/rights?_embed=children").then((res) => {
       const item = res.data.filter((element) => {
         element.children = element.children.filter(
-          (e) => e.pagepermisson === 1
+          (e) => e.pagepermisson === 1 && rights.includes(e.key)
         );
-        return element.pagepermisson === 1;
+        return element.pagepermisson === 1 && rights.includes(element.key);
       });
       // console.log("@@@", item);
       item.forEach((e) => {
@@ -39,7 +42,6 @@ export default function SideMenu() {
         e.children?.forEach((el) => (el.icon = <AndroidOutlined />));
         e.icon = <QqOutlined />;
       });
-      // console.log("@@", item);
       setMenu(item);
     });
   }, []);

@@ -17,14 +17,36 @@ export default function UserList() {
   const [roleList, setroleList] = useState([]);
   const [regionList, setregionList] = useState([]);
   const [isUpdateDisabled, setisUpdateDisabled] = useState(false);
+  // 更新时的item
+  const [current, setcurrent] = useState(null);
   const addForm = useRef(null);
   const updateForm = useRef(null);
+  const { roleId, region, username } = JSON.parse(
+    localStorage.getItem("token")
+  );
+
   useEffect(() => {
+    const roleObj = {
+      1: "superadmin",
+      2: "admin",
+      3: "editor",
+    };
     axios.get("http://localhost:5000/users?_expand=role").then((res) => {
       const list = res.data;
-      setDataSource(list);
+
+      setDataSource(
+        roleObj[roleId] === "superadmin"
+          ? list
+          : [
+              ...list.filter((item) => item.username === username),
+              ...list.filter(
+                (item) =>
+                  item.region === region && roleObj[item.roleId] === "editor"
+              ),
+            ]
+      );
     });
-  }, []);
+  }, [roleId, region, username]);
   useEffect(() => {
     axios.get("http://localhost:5000/regions").then((res) => {
       const list = res.data;
@@ -114,11 +136,8 @@ export default function UserList() {
       onOk() {
         // item：这一行的数据
         deleteMethod(item);
-        console.log("OK");
       },
-      onCancel() {
-        console.log("Cancel");
-      },
+      onCancel() {},
     });
   };
   const deleteMethod = (item) => {
@@ -126,7 +145,6 @@ export default function UserList() {
     axios.delete(`http://localhost:5000/users/${item.id}`);
   };
   const addFormOK = () => {
-    console.log("ok", addForm);
     addForm.current
       .validateFields()
       .then((value) => {
@@ -142,10 +160,10 @@ export default function UserList() {
             region: value.region,
             roleId:
               value.roleId === "超级管理员"
-                ? "1"
+                ? 1
                 : value.roleId === "区域管理员"
-                ? "2"
-                : "3",
+                ? 2
+                : 3,
           })
           .then((res) => {
             // setDataSource([...dataSource, ...res.data]);
@@ -172,15 +190,8 @@ export default function UserList() {
     });
   };
   const handleUpdate = (item) => {
-    console.log(item, "1");
     // 异步解决：Cannot read properties of null (reading 'setFieldsValue')
     setTimeout(() => {
-      const id =
-        item.roleId === 1
-          ? "超级管理员"
-          : item.roleId === 2
-          ? "区域管理员"
-          : "区域编辑";
       if (item.roleId === 1) {
         // 禁用
         setisUpdateDisabled(true);
@@ -188,11 +199,70 @@ export default function UserList() {
         // 不禁用
         setisUpdateDisabled(false);
       }
-      updateForm.current.setFieldsValue({ ...item, roleId: id });
+      if (item.roleId === 1 || item.roleId === 2 || item.roleId === 3) {
+        const id =
+          item.roleId === 1
+            ? "超级管理员"
+            : item.roleId === 2
+            ? "区域管理员"
+            : "区域编辑";
+        updateForm.current.setFieldsValue({ ...item, roleId: id });
+      } else {
+        updateForm.current.setFieldsValue({ ...item });
+      }
     }, 0);
     setupdateopen(true);
+    setcurrent(item);
   };
-  const updateFormOK = () => {};
+  const updateFormOK = () => {
+    updateForm.current.validateFields().then((value) => {
+      setupdateopen(false);
+      updateForm.current.resetFields();
+      axios
+        .patch(`http://localhost:5000/users/${current.id}`, {
+          username: value.username,
+          password: value.password,
+          region: value.region,
+          roleId:
+            value.roleId === "超级管理员"
+              ? 1
+              : value.roleId === "区域管理员"
+              ? 2
+              : 3,
+        })
+        .then((res) => {
+          // setDataSource([...dataSource, ...res.data]);
+          axios.get("http://localhost:5000/users?_expand=role").then((res) => {
+            const list = res.data;
+            setDataSource(list);
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
+      // setDataSource(
+      //   dataSource.map((item) => {
+      //     if (item.id === current.id) {
+      //       const roleId =
+      //         value.roleId === "超级管理员"
+      //           ? 1
+      //           : value.roleId === "区域管理员"
+      //           ? 2
+      //           : 3;
+      //       value.roleId = roleId;
+      //       console.log(item, current, "@@@", value);
+      //       return {
+      //         ...item,
+      //         ...value,
+      //       };
+      //     }
+      //     return item;
+      //   })
+      // );
+      setisUpdateDisabled(!isUpdateDisabled);
+    });
+  };
   return (
     <div>
       <div style={{ padding: "5px 0" }}>

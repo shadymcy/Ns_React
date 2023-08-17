@@ -1,3 +1,14 @@
+# additional dependency
+`npm i --save react-particles-js --legacy-peer-deps`(abandoned)
+
+`npm install react-particles`(https://github.com/tsparticles/react)
+
+To see more example:
+
+https://particles.js.org/samples/index.html#
+
+`npm i antd`
+
 # Run db
 
 `npm install -g json-server` 
