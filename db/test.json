@@ -1,14 +1,23 @@
 {
   "posts": [
     {
-    "title": "dsdsds",
-    "author": "hhh",
-    "id": 1
+      "title": "你牛逼",
+      "id": 1
     },
     {
-      "title": "Home",
-      "author": "Zxh",
-      "id": 2
+      "id": 2,
+      "title": "22222",
+      "author": "睡觉"
+    },
+    {
+      "title": "吃饭了吗",
+      "author": "小明",
+      "id": 3
+    },
+    {
+      "title": "吃饭了吗",
+      "author": "小明",
+      "id": 4
     }
   ],
   "comments": [
@@ -17,8 +26,5 @@
       "body": "some comment",
       "postId": 1
     }
-  ],
-  "profile": {
-    "name": "typicode"
-  }
+  ]
 }

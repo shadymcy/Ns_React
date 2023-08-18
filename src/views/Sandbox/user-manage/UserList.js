@@ -1,320 +1,272 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Button, Table, Modal, Switch } from "antd";
-import UserForm from "../../../components/user-manage/UserForm.js";
-import axios from "axios";
+import React, {useEffect, useState, useRef} from 'react';
+import { Table, Tag, Button, Tooltip, Modal, Switch } from 'antd';
 import {
-  DeleteOutlined,
-  EditOutlined,
-  ExclamationCircleOutlined,
-} from "@ant-design/icons";
+    DeleteOutlined,
+    EditOutlined,
+    ExclamationCircleOutlined,
+    PlusOutlined
+} from '@ant-design/icons';
+import axios from "axios";
 
-const { confirm } = Modal;
+import UserForm from "../../../components/user-manage/UserForm";
 
-export default function UserList() {
-  const [dataSource, setDataSource] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [updateopen, setupdateopen] = useState(false);
-  const [roleList, setroleList] = useState([]);
-  const [regionList, setregionList] = useState([]);
-  const [isUpdateDisabled, setisUpdateDisabled] = useState(false);
-  // 更新时的item
-  const [current, setcurrent] = useState(null);
-  const addForm = useRef(null);
-  const updateForm = useRef(null);
-  const { roleId, region, username } = JSON.parse(
-    localStorage.getItem("token")
-  );
 
-  useEffect(() => {
-    const roleObj = {
-      1: "superadmin",
-      2: "admin",
-      3: "editor",
-    };
-    axios.get("http://localhost:5000/users?_expand=role").then((res) => {
-      const list = res.data;
+export default function UserList(props) {
 
-      setDataSource(
-        roleObj[roleId] === "superadmin"
-          ? list
-          : [
-              ...list.filter((item) => item.username === username),
-              ...list.filter(
-                (item) =>
-                  item.region === region && roleObj[item.roleId] === "editor"
-              ),
-            ]
-      );
-    });
-  }, [roleId, region, username]);
-  useEffect(() => {
-    axios.get("http://localhost:5000/regions").then((res) => {
-      const list = res.data;
+    const [dataList,handleDataList] = useState([]);
+    const [roleDataList,setRoelData] = useState([]);
+    const [regionDataList,setRegionData] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isUpdateModal, setIsUpdateModal] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const addForm = useRef(null);
+    const updateForm = useRef(null);
+    const [updateId, setUpdateId] = useState(null);
+    const {id, roleId, region, username} = JSON.parse(localStorage.getItem("token"));
 
-      const a = list.map((item) => {
-        return { key: item.id, value: item.value, label: item.title };
-      });
-      setregionList(a);
-    });
-  }, []);
-  useEffect(() => {
-    axios.get("http://localhost:5000/roles").then((res) => {
-      const list = res.data;
-      const a = list.map((item) => {
-        return { key: item.id, value: item.roleName, label: item.roleName };
-      });
-      setroleList(a);
-    });
-  }, []);
-  const columns = [
-    {
-      title: "区域",
-      dataIndex: "region",
-      key: "region",
-      render: (region) => {
-        return <b>{region === "" ? "全球" : region}</b>;
-      },
-    },
-    {
-      title: "角色名称",
-      dataIndex: "role",
-      key: "role",
-      render: (role) => {
-        return <span>{role.roleName}</span>;
-      },
-    },
-    {
-      title: "用户名",
-      dataIndex: "username",
-      key: "username",
-    },
-    {
-      title: "用户状态",
-      dataIndex: "roleState",
-      key: "roleState",
-      render: (roleState, item) => {
-        return (
-          <Switch
-            onChange={() => handleChange(item)}
-            checked={roleState}
-            disabled={item.default}
-          ></Switch>
-        );
-      },
-    },
-    {
-      title: "操作",
-      key: "operate",
-      render: (item) => {
-        return (
-          <div>
-            <Button
-              danger
-              shape="circle"
-              icon={<DeleteOutlined />}
-              onClick={() => confirmMethod(item)}
-              disabled={item.default}
-            />
-            {"  "}
-            <Button
-              type="primary"
-              shape="circle"
-              icon={<EditOutlined />}
-              disabled={item.default}
-              onClick={() => handleUpdate(item)}
-            />
-          </div>
-        );
-      },
-    },
-  ];
-  const confirmMethod = (item) => {
-    confirm({
-      title: "Do you Want to delete these items?",
-      icon: <ExclamationCircleOutlined />,
-      // content: "Some descriptions",
-      onOk() {
-        // item：这一行的数据
-        deleteMethod(item);
-      },
-      onCancel() {},
-    });
-  };
-  const deleteMethod = (item) => {
-    setDataSource(dataSource.filter((data) => data.id !== item.id));
-    axios.delete(`http://localhost:5000/users/${item.id}`);
-  };
-  const addFormOK = () => {
-    addForm.current
-      .validateFields()
-      .then((value) => {
-        setOpen(false);
-        addForm.current.resetFields();
-        // post到后端，生成id，再设置dataSource，方便后面的删除和更新
-        axios
-          .post("http://localhost:5000/users", {
-            username: value.username,
-            password: value.password,
-            roleState: true,
-            default: false,
-            region: value.region,
-            roleId:
-              value.roleId === "超级管理员"
-                ? 1
-                : value.roleId === "区域管理员"
-                ? 2
-                : 3,
-          })
-          .then((res) => {
-            // setDataSource([...dataSource, ...res.data]);
-            axios
-              .get("http://localhost:5000/users?_expand=role")
-              .then((res) => {
-                const list = res.data;
-                setDataSource(list);
-              });
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
-  const handleChange = (item) => {
-    item.roleState = !item.roleState;
-    setDataSource([...dataSource]);
-    axios.patch(`http://localhost:5000/users/${item.id}`, {
-      roleState: item.roleState,
-    });
-  };
-  const handleUpdate = (item) => {
-    // 异步解决：Cannot read properties of null (reading 'setFieldsValue')
-    setTimeout(() => {
-      if (item.roleId === 1) {
-        // 禁用
-        setisUpdateDisabled(true);
-      } else {
-        // 不禁用
-        setisUpdateDisabled(false);
-      }
-      if (item.roleId === 1 || item.roleId === 2 || item.roleId === 3) {
-        const id =
-          item.roleId === 1
-            ? "超级管理员"
-            : item.roleId === 2
-            ? "区域管理员"
-            : "区域编辑";
-        updateForm.current.setFieldsValue({ ...item, roleId: id });
-      } else {
-        updateForm.current.setFieldsValue({ ...item });
-      }
-    }, 0);
-    setupdateopen(true);
-    setcurrent(item);
-  };
-  const updateFormOK = () => {
-    updateForm.current.validateFields().then((value) => {
-      setupdateopen(false);
-      updateForm.current.resetFields();
-      axios
-        .patch(`http://localhost:5000/users/${current.id}`, {
-          username: value.username,
-          password: value.password,
-          region: value.region,
-          roleId:
-            value.roleId === "超级管理员"
-              ? 1
-              : value.roleId === "区域管理员"
-              ? 2
-              : 3,
+    const columns = [
+        {
+            title: 'ID',
+            dataIndex: 'id',
+            render: (id) => <b>{id}</b>,
+        },
+        {
+            title: '角色名称',
+            render: (item) =>
+                <Tag color={item.roleId === 1 ? "orange" : (item.roleId === 2 ? "purple" : "cyan")} >
+                    {item.roleId  === 1 ? "超级管理员" : (item.roleId  === 2 ? "区域管理员" : "区域编辑")}
+                </Tag>,
+        },
+        {
+            title: '地区',
+            dataIndex: 'region',
+            filters: [...regionDataList.map(item => ({
+                text: item.title,
+                value: item.value
+            })),{
+                text: "全球",
+                value: "全球"
+            }],
+            onFilter: (value,item) => {
+                if (value === "全球") return item.region === ""
+                return item.region === value
+            },
+            render: item => <span>{item === "" ? "全球" : item}</span>
+        },
+        {
+            title: '用户名',
+            dataIndex: 'username',
+        },
+        {
+            title: '用户状态',
+            render: (item) => <div>
+                <Tooltip title={item.default?"":("点击切换为："+(item.roleState ? "封禁" : "正常"))}>
+                    <Switch
+                        checkedChildren="正常" unCheckedChildren="封禁"
+                        onChange={() => changeSwitchState(item)}
+                        checked={item.roleState}
+                        disabled={item.default}
+                    />
+                </Tooltip>
+            </div>,
+        },
+        {
+            title: '操作',
+            render: (item) => <div>
+                <Tooltip title="删除">
+                    <Button
+                        icon={<DeleteOutlined/>} shape="circle" size="large" danger
+                        onClick={() => confirm(item)}
+                    />
+                </Tooltip>&nbsp;&nbsp;
+                <Tooltip title="信息修改">
+                    <Button
+                        icon={<EditOutlined/>} shape="circle" size="large" type="primary"
+                        onClick={()=>{updateModal(item)}}
+                    />
+                </Tooltip>
+            </div>,
+        },
+    ];
+
+    const deleteMethod = (data) => {
+        axios.delete(`/users/${data.id}`).then(res => {
+            if (res.status === 200){
+                handleDataList(dataList.filter(item => item.id !== data.id));
+            }else{
+                console.log(res)
+            }
         })
-        .then((res) => {
-          // setDataSource([...dataSource, ...res.data]);
-          axios.get("http://localhost:5000/users?_expand=role").then((res) => {
-            const list = res.data;
-            setDataSource(list);
-          });
+    }
+
+    const changeSwitchState = (data) => {
+        dataList.map(item => {
+            if(item.id === data.id) item.roleState = !item.roleState;
+            return item
         })
-        .catch((err) => {
-          console.log(err);
+        axios.patch(`/users/${data.id}`, {roleState:data.roleState}).then(res=>{
+            if(res.status===200){
+                handleDataList([...dataList]);
+            }else{
+                console.log(res)
+            }
         });
+    }
 
-      // setDataSource(
-      //   dataSource.map((item) => {
-      //     if (item.id === current.id) {
-      //       const roleId =
-      //         value.roleId === "超级管理员"
-      //           ? 1
-      //           : value.roleId === "区域管理员"
-      //           ? 2
-      //           : 3;
-      //       value.roleId = roleId;
-      //       console.log(item, current, "@@@", value);
-      //       return {
-      //         ...item,
-      //         ...value,
-      //       };
-      //     }
-      //     return item;
-      //   })
-      // );
-      setisUpdateDisabled(!isUpdateDisabled);
-    });
-  };
-  return (
-    <div>
-      <div style={{ padding: "5px 0" }}>
-        <Button
-          type="primary"
-          onClick={() => {
-            setOpen(true);
-          }}
-        >
-          添加用户
-        </Button>
-      </div>
-      <Table
-        dataSource={dataSource}
-        columns={columns}
-        pagination={{ pageSize: 5 }}
-        rowKey={(item) => item.id}
-      />
-      <Modal
-        open={open}
-        title="添加用户"
-        okText="确认"
-        cancelText="取消"
-        onCancel={() => {
-          setOpen(false);
-        }}
-        onOk={addFormOK}
-      >
-        <UserForm
-          regionList={regionList}
-          roleList={roleList}
-          ref={addForm}
-        ></UserForm>
-      </Modal>
-      <Modal
-        open={updateopen}
-        title="更新用户"
-        okText="更新"
-        cancelText="取消"
-        onCancel={() => {
-          setupdateopen(false);
-          setisUpdateDisabled(!isUpdateDisabled);
-        }}
-        onOk={updateFormOK}
-      >
-        <UserForm
-          regionList={regionList}
-          roleList={roleList}
-          ref={updateForm}
-          isUpdateDisabled={isUpdateDisabled}
-        ></UserForm>
-      </Modal>
-    </div>
-  );
+    const confirm = (props) => {
+        Modal.confirm({
+            icon: <ExclamationCircleOutlined />,
+            content: '确认删除？',
+            okText: '是',
+            cancelText: '否',
+            onOk: () => deleteMethod(props)
+        });
+    };
+
+    const showModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const updateModal = async (data) => {
+        if (data.roleId === 1) {
+            setIsAdmin(true)
+        }else {
+            setIsAdmin(false)
+        }
+        await setIsUpdateModal(true);
+        await setUpdateId(data.id);
+        updateForm.current.setFieldsValue(data);
+    };
+
+    const handleOk = () => {
+        addForm.current.validateFields().then(value => {
+            let proms = {
+                ...value,
+                roleState: true,
+                default: value.roleId === 1
+            }
+            axios.post(`/users`, proms).then(res => {
+                if (res.data === 200||201){
+                    handleDataList([...dataList,res.data])
+                }else{
+                    console.log(res)
+                }
+            }).catch(err=>{
+                console.log(err)
+            })
+            addForm.current.resetFields();
+            setIsModalOpen(false);
+        }).catch(err=>{
+            console.log(err)
+        })
+    };
+
+    const handleUpdate = () =>{
+        updateForm.current.validateFields().then( async value => {
+            let proms = value;
+            axios.patch(`/users/${updateId}`, proms).then(res=>{
+                if (res.status === 200){
+                    handleDataList(dataList.map(item => {
+                        if(item.id === updateId) return {...item, ...proms, role: roleDataList.filter(data => data.id === value.roleId)[0]};
+                        return item;
+                    }))
+                }else{
+                    console.log(res)
+                }
+            }).catch(err=>{
+                console.log(err)
+            })
+
+            await setIsAdmin(!isAdmin);
+            setIsUpdateModal(false)
+        }).catch(err=>{
+            console.log(err)
+        })
+    };
+
+    useEffect(() =>{
+        axios.get("/users?_expand=role").then((res) => {
+            // const roleTypeList = {
+            //     "1": "superadmin",
+            //     "2": "admin",
+            //     "3": "editor",
+            // }
+
+            if (res.status === 200){
+                handleDataList(region === '' ?
+                    res.data :
+                    res.data.filter(item=> {
+                        if (item.id === id) return item
+                        return item.roleId > roleId && item.region === region;
+                    })
+                );
+                // handleDataList(
+                //     roleTypeList[roleId] === "superadmin" ?
+                //         res.data :
+                //         [
+                //             ...res.data.filter(item => item.username === username),
+                //             ...res.data.filter(item => item.region === region && roleTypeList[roleId] === "editor")
+                //         ]
+                // )
+            }else {
+                console.log(res)
+            }
+        })
+    },[id, roleId, region, username]);
+
+    useEffect(() =>{
+        axios.get("/regions").then((res) => {
+            if (res.status === 200){
+                setRegionData(res.data);
+            }else {
+                console.log(res)
+            }
+        })
+    },[]);
+
+    useEffect(() =>{
+        axios.get("/roles").then((res) => {
+            if (res.status === 200){
+                setRoelData(
+                    res.data.filter(item => {
+                        return item.roleType >= roleId
+                    })
+                );
+            }else {
+                console.log(res)
+            }
+        })
+    },[roleId]);
+
+    return (
+        <div>
+            <Modal title="添加用户" cancelText="取消" okText="添加"
+                   visible={isModalOpen}
+                   onOk={handleOk}
+                   onCancel={() => {
+                       addForm.current.resetFields();
+                       setIsModalOpen(false);
+                   }}
+            >
+                <UserForm ref={addForm} roleDataList={roleDataList} regionDataList={regionDataList} />
+            </Modal>
+            <Modal title="修改信息" cancelText="取消" okText="修改"
+                   visible={isUpdateModal}
+                   onOk={handleUpdate}
+                   onCancel={async () => {
+                       await setIsAdmin(!isAdmin);
+                       updateForm.current.resetFields();
+                       setIsUpdateModal(false);
+                   }}
+            >
+                <UserForm ref={updateForm} roleDataList={roleDataList} regionDataList={regionDataList} isAdmin={isAdmin} upData={true}/>
+            </Modal>
+            <Button
+                icon={<PlusOutlined />} size="large" type="primary" style={{borderRadius: "3px"}}
+                onClick={showModal}
+            >添加用户
+            </Button>
+            <Table columns={columns} dataSource={dataList} pagination={{pageSize: 7}} rowKey={(item) => item.id}/>
+        </div>
+    );
 }

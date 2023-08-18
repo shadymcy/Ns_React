@@ -1,5 +1,7 @@
-import React from "react";
+import React from 'react';
 
-export default function Nopermission() {
-  return <div>Nopermission</div>;
+export default function Nopermission(props) {
+    return (
+        <div>403 Nopermission</div>
+    );
 }

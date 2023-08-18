@@ -1,80 +1,123 @@
-import React, { forwardRef, useEffect, useState } from "react";
-import { Input, Form, Select } from "antd";
-// TODO: UserForm的权限限制
-const UserForm = forwardRef((props, ref) => {
-  const [isDisabled, setisDisabled] = useState(false);
-  const { regionList, roleList, isUpdateDisabled } = props;
-  useEffect(() => {
-    setisDisabled(isUpdateDisabled);
-  }, [isUpdateDisabled, props]);
-  return (
-    <Form layout="vertical" ref={ref}>
-      <Form.Item
-        name="username"
-        label="用户名"
-        rules={[
-          {
-            required: true,
-            message: "Please input the title of collection!",
-          },
-        ]}
-      >
-        <Input />
-      </Form.Item>
-      <Form.Item
-        name="password"
-        label="密码"
-        rules={[
-          {
-            required: true,
-            message: "Please input the title of collection!",
-          },
-        ]}
-      >
-        <Input.Password />
-      </Form.Item>
-      <Form.Item
-        name="region"
-        label="区域"
-        rules={
-          isDisabled
-            ? []
-            : [
-                {
-                  required: true,
-                  message: "Please input the title of collection!",
-                },
-              ]
-        }
-      >
-        <Select disabled={isDisabled} options={regionList}></Select>
-      </Form.Item>
-      <Form.Item
-        name="roleId"
-        label="角色"
-        rules={[
-          {
-            required: true,
-            message: "Please input the title of collection!",
-          },
-        ]}
-      >
-        <Select
-          onChange={(value) => {
-            console.log(value);
-            if (value === "超级管理员") {
-              setisDisabled(true);
-              ref.current.setFieldsValue({
-                region: "",
-              });
-            } else {
-              setisDisabled(false);
+import React, {forwardRef, useEffect, useState} from 'react';
+import {Form, Input, Select} from "antd";
+const { Option } = Select;
+
+const UserForm = forwardRef((props,ref)=>{
+    const [isDisable, setDisable] = useState(false)
+    const {roleId,region} = JSON.parse(localStorage.getItem("token"))
+    const roleObj ={
+        "1":"superadmin",
+        "2":"admin",
+        "3":"editor"
+    }
+
+    const unSelect = (item) => {
+        if(props.upData){
+            if(roleObj[roleId]==="superadmin"){
+                return false
+            }else{
+                return true
             }
-          }}
-          options={roleList}
-        ></Select>
-      </Form.Item>
-    </Form>
-  );
-});
+        }else{
+            if(roleObj[roleId]==="superadmin"){
+                return false
+            }else{
+                return item.value!==region
+            }
+        }
+    }
+
+    useEffect(()=>{
+        console.log(JSON.parse(localStorage.getItem("token")).roleId === 1)
+        setDisable(props.isAdmin)
+    },[props.isAdmin])
+
+    return (
+        <Form
+            ref={ref}
+            name="infoForm"
+            layout="vertical"
+            initialValues={{
+                remember: true,
+            }}
+            autoComplete="off"
+        >
+            <Form.Item
+                label="用户名"
+                name="username"
+                rules={[
+                    {
+                        required: true,
+                        message: '请输入用户名!',
+                    },
+                ]}
+            >
+                <Input />
+            </Form.Item>
+
+            <Form.Item
+                label="密码"
+                name="password"
+                rules={[
+                    {
+                        required: true,
+                        message: '请输入密码!',
+                    },
+                ]}
+            >
+                <Input.Password />
+            </Form.Item>
+
+            <Form.Item
+                label="区域"
+                name="region"
+                rules={ isDisable ? []:
+                    [
+                        {
+                            required: true,
+                            message: '请选择区域!',
+                        },
+                    ]}
+            >
+                <Select disabled={isDisable}>
+                    {
+                        props.regionDataList.map(item=>{
+                            return <Option disabled={unSelect(item)} key={item.id} value={item.value}>{item.title}</Option>
+                        })
+                    }
+                </Select>
+            </Form.Item>
+
+            <Form.Item
+                label="角色"
+                name="roleId"
+                rules={[
+                    {
+                        required: true,
+                        message: '请选择角色!',
+                    },
+                ]}
+            >
+                <Select
+                    onChange={(value) =>{
+                        if(value === 1) {
+                            ref.current.setFieldsValue({region: ""})
+                            setDisable(true)
+                        }else{
+                            setDisable(false)
+                        }
+                    }}
+                >
+                    {
+                        props.roleDataList.map(item=>{
+                            return <Option key={item.id} value={item.roleType}>{item.roleName}</Option>
+                        })
+                    }
+                </Select>
+            </Form.Item>
+
+        </Form>
+    );
+})
+
 export default UserForm;

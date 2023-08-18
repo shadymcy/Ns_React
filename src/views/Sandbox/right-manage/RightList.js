@@ -1,134 +1,123 @@
-import React, { useEffect, useState } from "react";
-import { Button, Table, Tag, Modal, Popover, Switch } from "antd";
-import axios from "axios";
+import React, {useEffect, useState} from 'react';
+import { Table, Tag, Button, Tooltip, Modal, Popover, Switch } from 'antd';
 import {
-  DeleteOutlined,
-  EditOutlined,
-  ExclamationCircleOutlined,
-} from "@ant-design/icons";
+    DeleteOutlined,
+    EditOutlined,
+    ExclamationCircleOutlined
+} from '@ant-design/icons';
+import axios from "axios";
 
-const { confirm } = Modal;
-export default function RightList() {
-  const [dataSource, setDataSource] = useState([]);
-  useEffect(() => {
-    axios.get("http://localhost:5000/rights?_embed=children").then((res) => {
-      const list = res.data;
-      list.forEach((e) => {
-        if (e.children.length === 0) {
-          e.children = "";
+export default function RightList(props) {
+
+    const [dataList,handleDataList] = useState([]);
+
+    const columns = [
+        {
+            title: 'ID',
+            dataIndex: 'id',
+            render: (id) => <b>{id}</b>,
+        },
+        {
+            title: '权限名称',
+            dataIndex: 'title',
+        },
+        {
+            title: '权限路径',
+            dataIndex: 'key',
+            render: (key) => <Tag color={"orange"} key={key}>{key}</Tag>,
+        },
+        {
+            title: '操作',
+            render: (item) => <div>
+                <Tooltip>
+                    <Button icon={<DeleteOutlined/>} shape="circle" size="large" title="删除权限" onClick={() => confirm(item)} danger/>
+                </Tooltip>&nbsp;&nbsp;
+                <Popover content={
+                            <div>当前状态：{item.pagepermisson === 1 ? "开启" : "关闭"}&nbsp;&nbsp;&nbsp;
+                                <Switch onChange={() => changeSwitchState(item)} checked={item.pagepermisson}/>
+                            </div>}
+                    title="权限开关"
+                    trigger={item.pagepermisson===undefined ? "" : "click"}
+                >
+                    <Tooltip>
+                        <Button icon={<EditOutlined/>} shape="circle" size="large" title="权限开关" type="primary" disabled={item.pagepermisson===undefined}/>
+                    </Tooltip>
+                </Popover>
+            </div>,
+        },
+    ];
+
+    const deleteMethod = (data) => {
+        if (data.grade === 1){
+            axios.delete(`http://localhost:5000/rights/${data.id}`).then(res => {
+                if (res.status === 200){
+                    handleDataList(dataList.filter(item => item.id !== data.id));
+                }else{
+                    console.log(res)
+                }
+            })
+        }else{
+            let list = dataList.filter(item => item.id === data["rightId"]);
+            list[0].children = list[0].children.filter(item => item.id !== data.id);
+            axios.delete(`http://localhost:5000/children/${data.id}`).then(res => {
+                if (res.status === 200){
+                    handleDataList([...dataList]);
+                }else{
+                    console.log(res)
+                }
+            })
         }
-      });
-      setDataSource(list);
-    });
-  }, []);
+    }
 
-  const columns = [
-    {
-      title: "ID",
-      dataIndex: "id",
-      key: "id",
-      render: (id) => {
-        return <b>{id}</b>;
-      },
-    },
-    {
-      title: "权限名称",
-      dataIndex: "label",
-      key: "label",
-    },
-    {
-      title: "权限路径",
-      dataIndex: "key",
-      key: "key",
-      render: (key) => {
-        return <Tag color="orange">{key}</Tag>;
-      },
-    },
-    {
-      title: "操作",
-      key: "operate",
-      render: (item) => {
-        return (
-          <div>
-            <Button
-              danger
-              shape="circle"
-              icon={<DeleteOutlined />}
-              onClick={() => confirmMethod(item)}
-            />
-            {"  "}
-            <Popover
-              content={
-                <div style={{ textAlign: "center" }}>
-                  <Switch
-                    checked={item.pagepermisson}
-                    onChange={() => switchMethod(item)}
-                  ></Switch>
-                </div>
-              }
-              title="页面配置项"
-              trigger={item.pagepermisson === undefined ? "" : "click"}
-            >
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<EditOutlined />}
-                disabled={item.pagepermisson === undefined}
-              />
-            </Popover>
-          </div>
-        );
-      },
-    },
-  ];
-  const confirmMethod = (item) => {
-    confirm({
-      title: "Do you Want to delete these items?",
-      icon: <ExclamationCircleOutlined />,
-      // content: "Some descriptions",
-      onOk() {
-        // item：这一行的数据
-        deleteMethod(item);
-      },
-      onCancel() {
-        console.log("Cancel");
-      },
-    });
-  };
-  const deleteMethod = (item) => {
-    // grade字段 表示第几层
-    if (item.grade === 1) {
-      let data = dataSource.filter((e) => e.id !== item.id);
-      setDataSource(data);
-      axios.delete(`http://localhost:5000/rights/${item.id}`);
-    } else {
-      console.log(item.rightId);
-      let data = dataSource.filter((d) => d.id === item.rightId);
-      data[0].children = data[0].children.filter((d) => d.id !== item.id);
-      setDataSource([...dataSource]);
-      axios.delete(`http://localhost:5000/children/${item.id}`);
+    const changeSwitchState = (item) => {
+        item.pagepermisson = item.pagepermisson === 1 ? 0 : 1;
+        if (item.grade === 1){
+            axios.patch(`http://localhost:5000/rights/${item.id}`, {pagepermisson:item.pagepermisson}).then(res=>{
+                if(res.status===200){
+                    handleDataList([...dataList]);
+                }else{
+                    console.log(res)
+                }
+            });
+        }else{
+            axios.patch(`http://localhost:5000/children/${item.id}`, {pagepermisson:item.pagepermisson}).then(res=>{
+                if(res.status===200){
+                    handleDataList([...dataList]);
+                }else{
+                    console.log(res)
+                }
+            });
+        }
     }
-  };
-  const switchMethod = (item) => {
-    item.pagepermisson = item.pagepermisson === 1 ? 0 : 1;
-    setDataSource([...dataSource]);
-    if (item.grade === 1) {
-      axios.patch(`http://localhost:5000/rights/${item.id}`, {
-        pagepermisson: item.pagepermisson,
-      });
-    } else {
-      axios.patch(`http://localhost:5000/children/${item.id}`, {
-        pagepermisson: item.pagepermisson,
-      });
-    }
-  };
-  return (
-    <div>
-      <Table
-        dataSource={dataSource}
-        columns={columns}
-        pagination={{ pageSize: 5 }}
-      />
-    </div>
-  );
+
+    const confirm = (props) => {
+        Modal.confirm({
+            icon: <ExclamationCircleOutlined />,
+            content: '确认删除？',
+            okText: '是',
+            cancelText: '否',
+            onOk: () => deleteMethod(props)
+        });
+    };
+
+
+    useEffect(() =>{
+        axios.get("http://localhost:5000/rights?_embed=children").then((res) => {
+            if (res.status === 200){
+                res.data.map((item, index) => {
+                    if (item.children && item.children.length < 1) delete item.children;
+                    return item
+                });
+                handleDataList(res.data);
+            }else {
+                console.log(res)
+            }
+        })
+    },[]);
+
+    return (
+        <div>
+            <Table columns={columns} dataSource={dataList} pagination={{pageSize: 7}} />
+        </div>
+    );
 }
