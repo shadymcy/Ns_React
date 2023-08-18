@@ -27,5 +27,5 @@ clone代码  ->  初始化  ->  安装 `json-server`  ->  db文件夹启动serve
 ## 使用到的框架
 
 * 涉及技术栈：`react@18`、`reactRouter@5`、`redux@4`、`antd@4`
-* 第三方工具库：`axios@0.27`、`echarts`、`lodash`、`NProgress` 等
+* 第三方工具库：`axios@0.27`、`echarts`、`lodash`、`NProgress`、`react-draft-wysiwyg` 等
 
