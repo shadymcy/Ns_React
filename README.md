@@ -1,5 +1,7 @@
 # Ns！
 ​	
+## 项目须知
+该项目是本人学习`React`时所创建的仓库，用于记录`React`的学习过程，**Based on B站** [千锋教育 kerwin老师](https://www.bilibili.com/video/BV1dP4y1c7qd?p=152&vd_source=dd831bffe2fbc3e5e70e5aabbee73fe4)的项目。
 
 ## 上手指南
 
@@ -20,11 +22,6 @@ clone代码  ->  初始化  ->  安装 `json-server`  ->  db文件夹启动serve
 - `npm install -g json-server`
 - `json-server --watch db.json --port 5000`
 - `npm start`
-
-
-## 测试
-
-​	解释说明一下如何运行该系统的自动测试部分。
 
 
 ## 使用到的框架
