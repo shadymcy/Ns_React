@@ -12,7 +12,7 @@
 - `node`版本，目前了解到的最好控制在14及以上的版本。
 - `package.json` 文件中未记录 `lodash` 版本，需要自行另安装。
 - 全局安装 `json-server` ，模拟接口。
-- 未安装 `NProgress` 进度条模块，如想使用请自行安装。
+- 未安装 `NProgress` 进度条模块，如想使用请自行安装。(npm install --save nprogress)
 
 ### 安装步骤
 
