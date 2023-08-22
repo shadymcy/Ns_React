@@ -28,4 +28,5 @@ clone代码  ->  初始化  ->  安装 `json-server`  ->  db文件夹启动serve
 
 * 涉及技术栈：`react@18`、`reactRouter@5`、`redux@4`、`antd@4`
 * 第三方工具库：`axios@0.27`、`echarts`、`lodash`、`NProgress`、`react-draft-wysiwyg` 等
+* 若需要 `redux` 持久化， 使用 `redux-persist`
 
